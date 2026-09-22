@@ -1,0 +1,5 @@
+# carregar a tabela salva
+df_silver_loaded = spark.table("mvpengenhariadedados.prata.clima_cidadesmvp")
+
+# mostrar os primeiros registros
+display(df_silver_loaded.limit(20))
