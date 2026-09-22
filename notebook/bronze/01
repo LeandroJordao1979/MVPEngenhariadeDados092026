@@ -1,0 +1,52 @@
+
+import codecs
+import glob
+from pyspark.sql.functions import col, when, to_date, year, month, dayofmonth, regexp_replace, lit
+
+# Caminho da pasta com todos os CSVs
+pasta = "/Volumes/mvpengenhariadedados/bronze/mvp_camadabronze/*.CSV"
+
+# Lista de arquivos
+arquivos = glob.glob(pasta)
+
+dfs = []
+
+for arquivo in arquivos:
+    # 1. Lê o cabeçalho manualmente para pegar a estação
+    with codecs.open(arquivo, "r", "ISO-8859-1") as f:
+        linhas = [next(f) for _ in range(8)]
+        cidade = None
+        for linha in linhas:
+            if "ESTACAO" in linha.upper():
+                cidade = linha.split(":")[1].strip()
+
+    # 2. Lê os dados (pulando os metadados)
+    df_bronze = (spark.read
+                 .option("header", True)
+                 .option("delimiter", ";")
+                 .option("skipRows", 8)
+                 .option("encoding", "ISO-8859-1")
+                 .csv(arquivo))
+
+    # 3. Tratamento
+    df_silver = (df_bronze
+        .withColumn("Data", to_date(col("Data"), "yyyy/MM/dd"))
+        .withColumn("Temperatura", regexp_replace(col("TEMPERATURA DO AR - BULBO SECO, HORARIA (°C)"), ",", ".").cast("double"))
+        .withColumn("Precipitacao", regexp_replace(col("PRECIPITAÇÃO TOTAL, HORÁRIO (mm)"), ",", ".").cast("double"))
+        .withColumn("Choveu", when(col("Precipitacao") > 0, "sim").otherwise("nao"))
+        .withColumn("Ano", year(col("Data")))
+        .withColumn("Mes", month(col("Data")))
+        .withColumn("Dia", dayofmonth(col("Data")))
+        .withColumn("Cidade", lit(cidade))  # adiciona a estação como coluna fixa
+        .select("Cidade", "Data", "Temperatura", "Precipitacao", "Choveu", "Ano", "Mes", "Dia")
+    )
+
+    dfs.append(df_silver)
+
+# 4. Unifica todos os DataFrames em um só
+df_final = dfs[0]
+for d in dfs[1:]:
+    df_final = df_final.unionByName(d)
+
+# 5. Gravação na camada silver
+df_final.write.mode("overwrite").saveAsTable("mvpengenhariadedados.prata.clima_cidadesMVP")
