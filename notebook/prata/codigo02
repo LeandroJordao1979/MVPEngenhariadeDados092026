@@ -1,0 +1,5 @@
+# Seleciona cidades distintas
+df_cidades = df_silver_loaded.select("Cidade").distinct().orderBy("Cidade")
+
+# Grava como uma nova tabela
+df_cidades.write.mode("overwrite").saveAsTable("mvpengenhariadedados.prata.lista_cidades")
