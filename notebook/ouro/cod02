@@ -1,0 +1,29 @@
+cidade = dbutils.widgets.get("Cidade")
+mes_inicial = dbutils.widgets.get("Mes_Inicial")
+dia_inicial = dbutils.widgets.get("Dia_Inicial")
+mes_final = dbutils.widgets.get("Mes_Final")
+dia_final = dbutils.widgets.get("Dia_Final")
+
+query = f"""
+SELECT
+    Cidade,
+    Ano,
+    {mes_inicial} AS Mes_Inicial,
+    {dia_inicial} AS Dia_Inicial,
+    {mes_final} AS Mes_Final,
+    {dia_final} AS Dia_Final,
+    ROUND(AVG(Temperatura), 2) AS Temp_Media_Periodo,
+    ROUND(AVG(Precipitacao), 2) AS Precipitacao_Media_Periodo,
+    CASE WHEN SUM(CASE WHEN Choveu = 'sim' THEN 1 ELSE 0 END) > 0 THEN 'sim' ELSE 'nao' END AS Choveu_Periodo
+FROM mvpengenhariadedados.prata.clima_cidadesmvp_corrigida
+WHERE Cidade = '{cidade}'
+  AND (
+        (Mes = {mes_inicial} AND Dia >= {dia_inicial})
+     OR (Mes = {mes_final} AND Dia <= {dia_final})
+  )
+GROUP BY Cidade, Ano
+ORDER BY Ano
+"""
+
+df_resultado = spark.sql(query)
+df_resultado.show()
