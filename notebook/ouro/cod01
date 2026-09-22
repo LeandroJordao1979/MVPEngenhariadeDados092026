@@ -1,0 +1,6 @@
+# Widgets em Python
+dbutils.widgets.dropdown("Cidade", "BRASILIA", [row["Cidade"] for row in spark.table("mvpengenhariadedados.prata.lista_cidades_final").select("Cidade").distinct().collect()])
+dbutils.widgets.text("Mes_Inicial", "4")
+dbutils.widgets.text("Dia_Inicial", "31")
+dbutils.widgets.text("Mes_Final", "5")
+dbutils.widgets.text("Dia_Final", "4")
