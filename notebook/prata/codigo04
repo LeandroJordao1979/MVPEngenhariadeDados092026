@@ -1,0 +1,5 @@
+# Seleciona cidades únicas da tabela corrigida
+df_lista_cidades = df_corrigida.select("Cidade").distinct().orderBy("Cidade")
+
+# Grava como nova tabela
+df_lista_cidades.write.mode("overwrite").saveAsTable("mvpengenhariadedados.prata.lista_cidades_final")
