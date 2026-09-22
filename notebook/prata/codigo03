@@ -1,0 +1,19 @@
+from pyspark.sql.functions import col, when
+
+# Carregar a tabela prata limpa
+df_silver_loaded = spark.table("mvpengenhariadedados.prata.clima_cidadesmvp_limpa")
+
+# Corrigir os nomes das cidades
+df_cidades_corrigidas = (df_silver_loaded
+    .withColumn("Cidade",
+        when(col("Cidade") == "SAO PAULO - INTERLAGOS", "SAO PAULO")
+        .when(col("Cidade") == "BELO HORIZONTE (PAMPULHA)", "BELO HORIZONTE")
+        .when(col("Cidade") == "BELO HORIZONTE - PAMPULHA", "BELO HORIZONTE")
+        .when(col("Cidade") == "PORTO ALEGRE - JARDIM BOTANICO", "PORTO ALEGRE")
+        .when(col("Cidade") == "RIO DE JANEIRO - FORTE DE COPACABANA", "RIO DE JANEIRO")
+        .otherwise(col("Cidade"))
+    )
+)
+
+# Gravar a tabela corrigida
+df_cidades_corrigidas.write.mode("overwrite").saveAsTable("mvpengenhariadedados.prata.clima_cidadesmvp_corrigida")
