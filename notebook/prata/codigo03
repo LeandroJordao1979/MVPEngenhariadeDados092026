@@ -1,3 +1,4 @@
+# Planilha com as cidades corrigidas
 from pyspark.sql.functions import col, when
 
 # Carregar a tabela prata limpa
